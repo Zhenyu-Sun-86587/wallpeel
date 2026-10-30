@@ -23,6 +23,8 @@ import {
   X,
 } from 'lucide-react'
 import { formatSize, type ExtractedFile } from './lib/extractor'
+import StaticExport from './StaticExport'
+import type { StaticAPI } from './lib/static-render'
 
 // ==========================================
 // 类型定义
@@ -54,6 +56,7 @@ interface WallpaperInfo {
 }
 
 interface WallpeelAPI {
+  staticExport: StaticAPI
   selectFolder: () => Promise<string | null>
   openPath: (targetPath: string) => Promise<void>
   autoFindWallpaperDir: () => Promise<{ paths: string[]; count: number }>
@@ -411,6 +414,7 @@ function App() {
 
   // MPKG 管理
   const [showMPKG, setShowMPKG] = useState(false)
+  const [staticExport, setStaticExport] = useState<{ inputPath?: string } | null>(null)
 
   // 设置
   const [showSettings, setShowSettings] = useState(false)
@@ -775,6 +779,12 @@ function App() {
           {darkMode ? <Sun size={14} /> : <Moon size={14} />}
         </button>
 
+        <button onClick={() => setStaticExport({})} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
+          fontSize: 12, border: `1px solid ${t.btnBorder}`, background: t.btnBg, color: t.text,
+          WebkitAppRegion: 'no-drag',
+        } as React.CSSProperties}><ImageIcon size={13} /> 导出静态壁纸</button>
+
         {/* MPKG 管理按钮 */}
         <button
           onClick={() => setShowMPKG(true)}
@@ -989,6 +999,7 @@ function App() {
               theme={t}
               onClose={() => { setSelected(null); setFiles([]); setLogs([]); setJobDir(''); setExtractStatus('') }}
               onExtract={handleExtract}
+              onStaticExport={() => setStaticExport({ inputPath: panelWp.hasPKG ? panelWp.pkgPath : panelWp.hasMPKG ? panelWp.mpkgPath : panelWp.filePath || panelWp.pngPath })}
               onToast={addToast}
               multiSelectMode={multiSelectMode}
               selectedCount={selectedIds.size}
@@ -1012,6 +1023,10 @@ function App() {
             }}
           />
         )}
+
+        {staticExport && <StaticExport inputPath={staticExport.inputPath}
+          outputDir={(useCustomOutput && outputDir) ? outputDir : defaultOutputDir}
+          dark={darkMode} onClose={() => setStaticExport(null)} />}
 
         {/* 设置弹窗 */}
         {showSettings && (
@@ -1329,7 +1344,7 @@ function GridCard({
 
 function DetailPanel({
   wallpaper: wp, previewSrc, outputDir, isRunning, extractStatus, files, stats, theme: t,
-  onClose, onExtract, onToast, multiSelectMode, selectedCount,
+  onClose, onExtract, onStaticExport, onToast, multiSelectMode, selectedCount,
 }: {
   wallpaper: WallpaperInfo
   previewSrc: string | null
@@ -1341,6 +1356,7 @@ function DetailPanel({
   theme: Theme
   onClose: () => void
   onExtract: () => void
+  onStaticExport: () => void
   onToast: (message: string, type: 'info' | 'success' | 'error') => void
   multiSelectMode: boolean
   selectedCount: number
@@ -1453,6 +1469,11 @@ function DetailPanel({
 
       {/* 操作按钮 */}
       <div style={{ margin: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button onClick={onStaticExport} disabled={isRunning} style={{
+          width: '100%', padding: 11, borderRadius: 12, fontSize: 13, fontWeight: 500,
+          background: '#2563eb', color: '#fff', border: 'none', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}><ImageIcon size={14} /> {wp.type.toLowerCase() === 'video' ? '选帧导出静态壁纸' : '合成整张 PNG / JPG'}</button>
         <button
           onClick={onExtract}
           disabled={isRunning}

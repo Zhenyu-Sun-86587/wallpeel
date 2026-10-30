@@ -1,7 +1,10 @@
 {
   "name": "wallpeel",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "description": "Wallpaper Engine 壁纸资源提取、静态图层合成与视频选帧工具",
+  "author": "Zhenyu-Sun-86587",
+  "homepage": "https://github.com/Zhenyu-Sun-86587/wallpeel",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -9,6 +12,7 @@
     "dev:vite": "vite",
     "dev:electron": "wait-on http://localhost:5173 && electron .",
     "build": "tsc -b && vite build",
+    "test:static": "node --test tests/static-export.test.cjs",
     "pack": "npm run build && electron-builder --win",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -18,7 +22,7 @@
     "productName": "Wallpeel",
     "asar": false,
     "directories": {
-      "output": "C:\\Users\\31930\\Desktop\\Wallpeel-Release",
+      "output": "release",
       "buildResources": "build"
     },
     "files": [
@@ -27,7 +31,11 @@
       "tools/**/*",
       "package.json"
     ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
     "nsis": {
+      "artifactName": "Wallpeel.Setup.${version}.${arch}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
@@ -45,7 +53,8 @@
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -63,7 +72,6 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "postcss": "^8.5.15",
-    "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",

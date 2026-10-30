@@ -1,6 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('wallpeel', {
+  staticExport: {
+    choose: (kind) => ipcRenderer.invoke('static:choose', kind),
+    prepare: (input) => ipcRenderer.invoke('static:prepare', input),
+    output: (id, defaultPath) => ipcRenderer.invoke('static:output', id, defaultPath),
+    save: (payload) => ipcRenderer.invoke('static:save', payload),
+    release: (id) => ipcRenderer.invoke('static:release', id),
+  },
   // 原有接口
   selectFile: () => ipcRenderer.invoke('dialog:selectFile'),
   selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),

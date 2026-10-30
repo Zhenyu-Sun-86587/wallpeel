@@ -31,3 +31,4 @@ electron/*.bak
 # Output directory
 output/
 Wallpeel_Output/
+release/

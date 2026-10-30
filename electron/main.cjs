@@ -1,6 +1,10 @@
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain, shell, protocol } = require('electron')
 const path = require('path')
 const fs = require('fs')
+const { installStaticExport } = require('./static-export.cjs')
+
+protocol.registerSchemesAsPrivileged([{ scheme: 'wallpeel-media', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }])
+installStaticExport({ app, BrowserWindow, dialog, ipcMain, protocol })
 
 const isDev = !app.isPackaged
 
