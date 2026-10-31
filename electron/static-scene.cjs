@@ -143,6 +143,23 @@ async function describe(root, register, { project = {}, preferredFile } = {}) {
         if (!blend) { blend = 'source-over'; warnings.add('部分材质混合方式使用普通叠加代替。') }
         if (Number(value(o.colorBlendMode, 0)) !== 0) warnings.add('部分图层使用特殊颜色混合，当前以普通叠加近似。')
         const notes = []
+        const opacityMasks = []
+        let unsupportedEffects = false
+        for (const effect of o.effects ?? []) {
+          if (value(effect.visible, true) === false) continue
+          // Only interpret the known opacity effect; never guess masks from filenames.
+          const builtin = String(effect.file ?? '').replaceAll('\\','/').toLowerCase() === 'effects/opacity/effect.json'
+          if (!builtin) { unsupportedEffects = true; continue }
+          const settings = effect.passes?.[0] ?? {}
+          const alphaValue = Number(value(settings.constantshadervalues?.alpha, 1))
+          const alpha = Number.isFinite(alphaValue) ? Math.max(0,Math.min(1,alphaValue)) : 1
+          const reference = value(settings.textures?.[1], null)
+          const usesMask = Number(value(settings.combos?.MASK, 1)) !== 0
+          const maskFile = usesMask && reference ? textureFile(reference) : null
+          if (usesMask && reference && !maskFile) warnings.add(`「${o.name ?? id}」缺少透明度遮罩，未猜测替代图片。`)
+          opacityMasks.push({ url:maskFile ? register(maskFile) : null, alpha })
+        }
+        if (opacityMasks.some(mask=>mask.url)) notes.push('已应用壁纸自带的轮廓遮罩')
         let mesh
         if (model.puppet) {
           const meshFile = resolve(model.puppet)
@@ -152,11 +169,11 @@ async function describe(root, register, { project = {}, preferredFile } = {}) {
           notes.push('使用模型保存的静态形状，不播放骨骼动画')
           warnings.add('骨骼图层使用模型保存的静态形状，不播放动画。')
         }
-        if (o.effects?.length || material.passes?.length > 1) warnings.add('动态特效和多通道着色器未还原，合成基础图像。')
+        if (unsupportedEffects || material.passes?.length > 1) warnings.add('部分动态特效和多通道着色器未还原，合成基础图像及透明度遮罩。')
         layers.push({ id, name: String(o.name ?? id), url: register(file), width: size[0], height: size[1],
           sourceWidth: meta.width, sourceHeight: meta.height, matrix, ancestors: transform.ancestors,
           opacity: Math.max(0, Math.min(1, Number(value(o.alpha, 1)))), color: color(o.color),
-          brightness: Math.max(0, Number(value(o.brightness, 1))), blend, notes, mesh,
+          brightness: Math.max(0, Number(value(o.brightness, 1))), blend, notes, mesh, opacityMasks,
           alignment: o.alignment ?? o.horizontalalign ?? 'center' })
       } catch (error) { warnings.add(`未合成「${o.name ?? id}」：${error.message}`) }
     }

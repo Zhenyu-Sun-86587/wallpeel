@@ -1,4 +1,4 @@
-import { drawStaticMesh } from './static-mesh'
+import { prepareLayer } from './static-layer'
 
 export interface StillLayer {
   id: string
@@ -17,6 +17,7 @@ export interface StillLayer {
   alignment: string
   notes: string[]
   mesh?: { positions: number[]; uvs: number[]; indices: number[] }
+  opacityMasks?: { url: string | null; alpha: number }[]
 }
 export interface StillDocument {
   id: string
@@ -30,7 +31,7 @@ export interface StillDocument {
   nodes: { id: string; name: string; visible: boolean; parent: string | null }[]
   videos: { name: string; url: string }[]
 }
-export interface LayerEdit { visible: boolean; x: number; y: number; scale: number; rotation: number; opacity: number }
+export interface LayerEdit { visible: boolean; x: number; y: number; scale: number; rotation: number; opacity: number; useMasks: boolean; defringe: number }
 export type Edits = Record<string, LayerEdit>
 export interface StaticAPI {
   choose: (kind: 'file' | 'folder') => Promise<string | null>
@@ -40,7 +41,7 @@ export interface StaticAPI {
   release: (id: string) => Promise<void>
 }
 export function defaultEdits(doc: StillDocument): Edits {
-  return Object.fromEntries(doc.nodes.map(n => [n.id, { visible: n.visible, x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 }]))
+  return Object.fromEntries(doc.nodes.map(n => [n.id, { visible: n.visible, x: 0, y: 0, scale: 1, rotation: 0, opacity: 1, useMasks: true, defringe: 0 }]))
 }
 export function isVisible(layer: StillLayer, edits: Edits) {
   return edits[layer.id]?.visible && layer.ancestors.every(id => edits[id]?.visible !== false)
@@ -78,7 +79,7 @@ export async function drawScene(canvas: HTMLCanvasElement, doc: StillDocument, l
   for (const layer of visible) {
     const image = await loadImage(layer.url)
     const edit = edits[layer.id]
-    let source: CanvasImageSource = layer.mesh ? drawStaticMesh(image,layer) : image
+    let source: CanvasImageSource = await prepareLayer(image,layer,edit,loadImage)
     // Multiply RGB while preserving alpha, including partially transparent pixels.
     if (layer.color.some(c => c !== 1) || layer.brightness !== 1) {
       const tinted = document.createElement('canvas')

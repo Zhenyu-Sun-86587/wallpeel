@@ -1,7 +1,7 @@
 {
   "name": "wallpeel",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Wallpaper Engine 壁纸资源提取、静态图层合成与视频选帧工具",
   "author": "Zhenyu-Sun-86587",
   "homepage": "https://github.com/Zhenyu-Sun-86587/wallpeel",

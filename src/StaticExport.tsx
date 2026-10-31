@@ -193,6 +193,9 @@ export default function StaticExport({ inputPath, outputDir, dark, onClose }: Pr
               })}</div>
               {selectedLayer && selectedEdit && <div className="still-adjust"><h3>调整所选图层</h3><p className="still-muted">{selectedLayer.name}</p>
                 <div className="still-fields">{([{key:'x',label:'水平偏移',step:1,min:-32768,max:32768},{key:'y',label:'垂直偏移',step:1,min:-32768,max:32768},{key:'scale',label:'缩放倍率',step:0.01,min:0.01,max:20},{key:'rotation',label:'旋转角度',step:1,min:-360,max:360},{key:'opacity',label:'透明度',step:0.05,min:0,max:1}] as const).map(f=><label key={f.key}>{f.label}<input disabled={busy} type="number" value={selectedEdit[f.key]} min={f.min} max={f.max} step={f.step} onChange={e=>{const n=e.target.valueAsNumber;if(Number.isFinite(n))edit(selected,{[f.key]:Math.max(f.min,Math.min(f.max,n))})}}/></label>)}</div>
+                {!!selectedLayer.opacityMasks?.length && <label className="still-row"><input type="checkbox" disabled={busy} checked={selectedEdit.useMasks} onChange={e=>edit(selected,{useMasks:e.target.checked})}/> 使用壁纸自带的轮廓遮罩</label>}
+                <label className="still-row">白边修复<select aria-label="白边修复" disabled={busy} value={selectedEdit.defringe} onChange={e=>edit(selected,{defringe:Number(e.target.value)})}><option value="0">关闭（保留原始描边）</option><option value="1">轻度</option><option value="2">较强</option></select></label>
+                <p className="still-muted">优先使用原始遮罩。仍有白边时再开启修复；可关闭以保留发光和描边效果。</p>
                 {selectedLayer.notes.map(note=><p className="still-muted" key={note}>{note}</p>)}
               </div>}
             </>}
